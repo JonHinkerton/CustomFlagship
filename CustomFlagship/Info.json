@@ -1,0 +1,12 @@
+﻿{
+  "Id": "CustomFlagship",
+  "DisplayName": "Custom Flagship",
+  "Author": "jonhinkerton",
+  "Version": "1.0.0",
+  "ManagerVersion": "0.25.0",
+  "Requirements": [],
+  "AssemblyName": "CustomFlagship.dll",
+  "EntryMethod": "CustomFlagship.Main.Load",
+  "HomePage": "",
+  "Repository": ""
+}
