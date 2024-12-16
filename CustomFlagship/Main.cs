@@ -237,36 +237,36 @@ namespace CustomFlagship
             {
                 return false;
 
-                UnitEntityView unitEntityView = ship.View;
-                log.Log("uev: " + unitEntityView);
-                if (unitEntityView == null)
-                {
-                    log.Log("create view");
-                    unitEntityView = ship.CreateView();
-                    log.Log("attach view");
-                    ship.AttachView(unitEntityView);
-                }
-                log.Log("uev: " + unitEntityView);
-                var gcic = unitEntityView.GetComponentInChildren<StarshipView>();
-                log.Log("gcic: " + gcic);
-                var br = gcic.BaseRenderer;
-                log.Log("br: " + br);
-                if (br != null)
-                {
-                    log.Log("in null: " + br);
-                    GameObject original = br.gameObject;
-                    log.Log("original: " + original);
-                    GameObject m_SimpleAvatar = null; ;
-                    Transform m_TargetPlaceholder = null;
-                    m_SimpleAvatar = UnityEngine.Object.Instantiate(original, m_TargetPlaceholder, worldPositionStays: false);
-                    log.Log("m_SimpleAvatar: " + m_SimpleAvatar);
-                    m_SimpleAvatar.transform.localPosition = Vector3.zero;
-                    m_SimpleAvatar.transform.localRotation = Quaternion.identity;
-                    m_SimpleAvatar.transform.localScale = unitEntityView.transform.localScale;
-                    log.Log("transformed");
-                }
-                log.Log("returning");
-                return false;
+                //UnitEntityView unitEntityView = ship.View;
+                //log.Log("uev: " + unitEntityView);
+                //if (unitEntityView == null)
+                //{
+                //    log.Log("create view");
+                //    unitEntityView = ship.CreateView();
+                //    log.Log("attach view");
+                //    ship.AttachView(unitEntityView);
+                //}
+                //log.Log("uev: " + unitEntityView);
+                //var gcic = unitEntityView.GetComponentInChildren<StarshipView>();
+                //log.Log("gcic: " + gcic);
+                //var br = gcic.BaseRenderer;
+                //log.Log("br: " + br);
+                //if (br != null)
+                //{
+                //    log.Log("in null: " + br);
+                //    GameObject original = br.gameObject;
+                //    log.Log("original: " + original);
+                //    GameObject m_SimpleAvatar = null; ;
+                //    Transform m_TargetPlaceholder = null;
+                //    m_SimpleAvatar = UnityEngine.Object.Instantiate(original, m_TargetPlaceholder, worldPositionStays: false);
+                //    log.Log("m_SimpleAvatar: " + m_SimpleAvatar);
+                //    m_SimpleAvatar.transform.localPosition = Vector3.zero;
+                //    m_SimpleAvatar.transform.localRotation = Quaternion.identity;
+                //    m_SimpleAvatar.transform.localScale = unitEntityView.transform.localScale;
+                //    log.Log("transformed");
+                //}
+                //log.Log("returning");
+                //return true;
             }
 
                 //[HarmonyPatch(typeof(ShipDollRoom), nameof(ShipDollRoom.SetupShip))]
