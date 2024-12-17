@@ -26,9 +26,6 @@ using Kingmaker.View;
 
 namespace CustomFlagship
 {
-#if DEBUG
-    [EnableReloading]
-#endif
     public static class Main
     {
         internal static Harmony HarmonyInstance;
@@ -66,9 +63,7 @@ namespace CustomFlagship
         public static bool Load(UnityModManager.ModEntry modEntry)
         {
             log = modEntry.Logger;
-#if DEBUG
-            modEntry.OnUnload = OnUnload;
-#endif
+
             modEntry.OnGUI = OnGUI;
             HarmonyInstance = new Harmony(modEntry.Info.Id);
             HarmonyInstance.PatchAll(Assembly.GetExecutingAssembly());
@@ -131,41 +126,38 @@ namespace CustomFlagship
 
         }
 
-#if DEBUG
-        public static bool OnUnload(UnityModManager.ModEntry modEntry)
-        {
-            HarmonyInstance.UnpatchAll(modEntry.Info.Id);
-            return true;
-        }
-#endif
-
         public static void InitChange()
         {
             ReloadPerSaveSettings();
-            //log.Log("savedShip: " + shipPick + " savedSize: " + sizePick + ".");
+            // log.Log("savedShip: " + shipPick + " savedSize: " + sizePick + ".");
 
-            BaseUnitEntity thisship = Game.Instance.Player.AllStarships.FirstOrDefault().Descriptor();
-            //log.Log("bue: " + thisship.Name + " shipPickBP:" + ships[shipPick][1].ToString() + " sizePick: " + sizes[sizePick].ToString());
-            BlueprintUnit bpu = ResourcesLibrary.TryGetBlueprint<BlueprintUnit>(ships[shipPick][1].ToString());
-            UnitViewLink uvl = bpu.Prefab;
-            thisship.Blueprint.Prefab = uvl;
+            BaseUnitEntity thisShip = Game.Instance.Player.AllStarships.FirstOrDefault()?.Descriptor();
+            // log.Log("bue: " + thisShip.Name + " shipPickBP:" + ships[shipPick][1].ToString() + " sizePick: " + sizes[sizePick].ToString());
 
-            if (sizes[sizePick] == "Large")
+            var blueprintId = ships[shipPick][1];
+            BlueprintUnit shipBlueprint = ResourcesLibrary.TryGetBlueprint<BlueprintUnit>(blueprintId);
+            if (shipBlueprint == null)
             {
-                thisship.View.gameObject.transform.localScale = new Vector3(1.6f, 1.6f, 1.3f);
+                return;
             }
-            else if (sizes[sizePick] == "Normal")
+
+            thisShip.Blueprint.Prefab = shipBlueprint.Prefab;
+
+            // Scale mapping for each size
+            var sizeScales = new Dictionary<string, Vector3>
             {
-                thisship.View.gameObject.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
-            }
-            else if (sizes[sizePick] == "Small")
+                { "Large", new Vector3(1.6f, 1.6f, 1.3f) },
+                { "Normal", new Vector3(1.0f, 1.0f, 1.0f) },
+                { "Small", new Vector3(0.6f, 0.6f, 0.8f) },
+                { "XSmall", new Vector3(0.3f, 0.3f, 0.5f) },
+                { "XXSmall", new Vector3(0.1f, 0.1f, 0.3f) }
+            };
+
+            if (sizeScales.TryGetValue(sizes[sizePick], out var scale))
             {
-                thisship.View.gameObject.transform.localScale = new Vector3(0.6f, 0.6f, 0.8f);
+                thisShip.View.gameObject.transform.localScale = scale;
             }
-            else if (sizes[sizePick] == "XSmall")
-            {
-                thisship.View.gameObject.transform.localScale = new Vector3(0.3f, 0.3f, 0.5f);
-            }
+            
         }
         public static void ReloadPerSaveSettings()
         {
@@ -199,19 +191,6 @@ namespace CustomFlagship
             var json = JsonConvert.SerializeObject(cachedPerSave);
             Game.Instance.State.InGameSettings.List[PerSaveSettings.ID] = json;
         }
-
-        
-        
-        //public class MyListener : IAreaActivationHandler
-        //{
-        //    public void OnAreaActivated()
-        //    {
-        //        if (Game.Instance.CurrentMode == GameModeType.StarSystem || Game.Instance.CurrentMode == GameModeType.SpaceCombat)
-        //        {
-        //            InitChange();
-        //        }
-        //    }
-        //}
 
         [HarmonyPatch]
         static class Patches
