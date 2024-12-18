@@ -23,6 +23,9 @@ using Newtonsoft.Json;
 using Kingmaker.BundlesLoading;
 using Kingmaker.UI.DollRoom;
 using Kingmaker.View;
+using System.IO;
+using System.Text.Json;
+using Kingmaker.Designers.EventConditionActionSystem.Actions;
 
 namespace CustomFlagship
 {
@@ -35,15 +38,17 @@ namespace CustomFlagship
 
         private static List<string[]> ships = new List<string[]> {
             new string[] {"Original", "923ea8656e3946c38b13038c1d9e7307"},
+            new string[] {"Sword Frigate", "923ea8656e3946c38b13038c1d9e7307"},
             new string[] {"Imperial Cruiser", "3b6609d444a34dfe83a56028b86abe90"},
             new string[] {"Imperial Cruiser 2", "c41bae2a60d24abd99d0663c439f37e1"},
             new string[] {"Imperial Transport", "f29445dd202d4d98b9bc2ca0e4ce6192"},
             new string[] {"Chaos Frigate", "2074b0cda9de41f2a446483f98605215"},
             new string[] {"Chaos Cruiser", "ddf557a81bca41f79c04b848ac4406bb" }
+            //new string[] { "Firestorm", "2d9014f545b143418cb42cbf64dfd74f" },
+            //new string[] { "Falchion", "4e4481bae463473ebc4c3f7b10de9403" }
         };
 
-
-        static string[] shipNames = { ships[0][0], ships[1][0], ships[2][0], ships[3][0], ships[4][0], ships[5][0] };
+        static string[] shipNames = { ships[0][0], ships[1][0], ships[2][0], ships[3][0], ships[4][0], ships[5][0], ships[6][0] }; //, ships[7][0], ships[8][0] };
         static string[] sizes = { "Large", "Normal", "Small", "XSmall", "XXSmall" };
 
         static int shipPick = 0;
@@ -68,9 +73,6 @@ namespace CustomFlagship
             HarmonyInstance = new Harmony(modEntry.Info.Id);
             HarmonyInstance.PatchAll(Assembly.GetExecutingAssembly());
 
-            //MyListener listener = new MyListener();
-            //EventBus.Subscribe(listener);
-
             return true;
         }
 
@@ -83,6 +85,8 @@ namespace CustomFlagship
                 ReloadPerSaveSettings();
                 InitChange();
             }
+
+            ships[0][1] = Game.Instance.Player.AllStarships.FirstOrDefault()?.Descriptor().Blueprint.AssetGuid;
 
             using (new GUILayout.VerticalScope())
             {
@@ -97,7 +101,7 @@ namespace CustomFlagship
             GUILayout.Label("Pick a ship", GUILayout.ExpandWidth(false));
 
             int selectedShip = shipPick;
-            shipPick = GUILayout.SelectionGrid(selectedShip, shipNames, 3);
+            shipPick = GUILayout.SelectionGrid(selectedShip, shipNames, 4);
             if (selectedShip != shipPick)
             {
                 //log.Log("selectedShip: " + selectedShip + " shipPick: " + shipPick + ".");
@@ -159,6 +163,7 @@ namespace CustomFlagship
             }
             
         }
+
         public static void ReloadPerSaveSettings()
         {
             var player = Game.Instance?.Player;
@@ -211,63 +216,78 @@ namespace CustomFlagship
             }
 
             [HarmonyPatch(typeof(ShipDollRoom), nameof(ShipDollRoom.CreateSimpleAvatar))]
-            [HarmonyPrefix]
-            static bool CreateSimpleAvatar_Prefix(BaseUnitEntity ship)
+            static class IgnoreBrokenShips
             {
-                return false;
+                static bool Prefix(ShipDollRoom __instance)
+                {
+                    //return false;
+                    BaseUnitEntity ship = Game.Instance.Player.AllStarships.FirstOrDefault()?.Descriptor();
+                    UnitEntityView unitEntityView = ship.View;
+                    log.Log("uev: " + unitEntityView);
+                    if (unitEntityView == null)
+                    {
+                        log.Log("create view");
+                        unitEntityView = ship.CreateView();
+                        log.Log("attach view");
+                        ship.AttachView(unitEntityView);
+                    }
+                    log.Log("uev: " + unitEntityView);
+                    var gcic = unitEntityView.GetComponentInChildren<StarshipView>();
+                    log.Log("gcic: " + gcic);
+                    bool hasbr = false;
+                    try
+                    {
+                        var brthis = gcic.BaseRenderer.gameObject;
+                        hasbr = true;
+                        log.Log("brthis: " + brthis);
+                    }
+                    catch (Exception e) { }
 
-                //UnitEntityView unitEntityView = ship.View;
-                //log.Log("uev: " + unitEntityView);
-                //if (unitEntityView == null)
-                //{
-                //    log.Log("create view");
-                //    unitEntityView = ship.CreateView();
-                //    log.Log("attach view");
-                //    ship.AttachView(unitEntityView);
-                //}
-                //log.Log("uev: " + unitEntityView);
-                //var gcic = unitEntityView.GetComponentInChildren<StarshipView>();
-                //log.Log("gcic: " + gcic);
-                //var br = gcic.BaseRenderer;
-                //log.Log("br: " + br);
-                //if (br != null)
-                //{
-                //    log.Log("in null: " + br);
-                //    GameObject original = br.gameObject;
-                //    log.Log("original: " + original);
-                //    GameObject m_SimpleAvatar = null; ;
-                //    Transform m_TargetPlaceholder = null;
-                //    m_SimpleAvatar = UnityEngine.Object.Instantiate(original, m_TargetPlaceholder, worldPositionStays: false);
-                //    log.Log("m_SimpleAvatar: " + m_SimpleAvatar);
-                //    m_SimpleAvatar.transform.localPosition = Vector3.zero;
-                //    m_SimpleAvatar.transform.localRotation = Quaternion.identity;
-                //    m_SimpleAvatar.transform.localScale = unitEntityView.transform.localScale;
-                //    log.Log("transformed");
-                //}
-                //log.Log("returning");
-                //return true;
+                    if (!hasbr)
+                    {
+                        //Replace gcic with root ship
+                        log.Log("return false");
+                        return false;
+                    }
+                    var br = gcic.BaseRenderer;
+                    log.Log("in null: " + br);
+                    GameObject original = br.gameObject;
+                    log.Log("original: " + original);
+                    GameObject m_SimpleAvatar = null;
+                    Transform m_TargetPlaceholder = null;
+                    m_SimpleAvatar = UnityEngine.Object.Instantiate(original, m_TargetPlaceholder, worldPositionStays: false);
+                    log.Log("m_SimpleAvatar: " + m_SimpleAvatar);
+                    m_SimpleAvatar.transform.localPosition = Vector3.zero;
+                    m_SimpleAvatar.transform.localRotation = Quaternion.identity;
+                    //m_SimpleAvatar.transform.localScale = unitEntityView.transform.localScale;
+                    log.Log("transformed");
+
+                    log.Log("returning");
+                    return true;
+                }
             }
 
-                //[HarmonyPatch(typeof(ShipDollRoom), nameof(ShipDollRoom.SetupShip))]
-                //[HarmonyPrefix]
-                //static bool SetupShip_Prefix(BaseUnitEntity ship)
-                //{
-                //    //log.Log("passed ship prefab: " + ship.Blueprint.Prefab.AssetId);
-                //    //BaseUnitEntity thisship = Game.Instance.Player.AllStarships.FirstOrDefault().Descriptor();
-                //    //ship = thisship;
+            //[HarmonyPatch(typeof(ShipDollRoom), nameof(ShipDollRoom.SetupShip))]
+            //[HarmonyPrefix]
+            //static bool SetupShip_Prefix(BaseUnitEntity ship)
+            //{
+            //    //log.Log("passed ship prefab: " + ship.Blueprint.Prefab.AssetId);
+            //    //BaseUnitEntity thisship = Game.Instance.Player.AllStarships.FirstOrDefault().Descriptor();
+            //    //ship = thisship;
 
-                //    //log.Log("player ship prefab: " + thisship.Blueprint.Prefab.AssetId);
-                //    //log.Log("converted ship prefab: " + thisship.Blueprint.Prefab.AssetId);
-                //    //BlueprintUnit bpu = ResourcesLibrary.TryGetBlueprint<BlueprintUnit>("923ea8656e3946c38b13038c1d9e7307");
-                //    //log.Log("bpu prefab: " + bpu.Prefab.AssetId);
-                //    //UnitViewLink uvl = bpu.Prefab;
-                //    //ship.Blueprint.Prefab = uvl;
-                //    //log.Log("final ship prefab: " + ship.Blueprint.Prefab.AssetId);
-                //    return true;
+            //    //log.Log("player ship prefab: " + thisship.Blueprint.Prefab.AssetId);
+            //    //log.Log("converted ship prefab: " + thisship.Blueprint.Prefab.AssetId);
+            //    //BlueprintUnit bpu = ResourcesLibrary.TryGetBlueprint<BlueprintUnit>("923ea8656e3946c38b13038c1d9e7307");
+            //    //log.Log("bpu prefab: " + bpu.Prefab.AssetId);
+            //    //UnitViewLink uvl = bpu.Prefab;
+            //    //ship.Blueprint.Prefab = uvl;
+            //    //log.Log("final ship prefab: " + ship.Blueprint.Prefab.AssetId);
+            //    return true;
 
-                //}
+            //}
 
-            }
+        }
+
     }
 }
 
