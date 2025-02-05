@@ -39,6 +39,9 @@ namespace CustomFlagship
         private static List<string[]> ships = new List<string[]> {
             new string[] {"Original", "923ea8656e3946c38b13038c1d9e7307"},
             new string[] {"Sword Frigate", "923ea8656e3946c38b13038c1d9e7307"},
+            new string[] {"Viper Destroyer", "711f6477b8d4405cb09cf82f4f7e322d"},
+            new string[] {"Cobra Destroyer", "f9e619867a7c4a67b574d346d10cffa1"},
+            new string[] {"Claymore Corvette", "82bad175995d4f23baf884a9caf77dea"},
             new string[] {"Imperial Cruiser", "3b6609d444a34dfe83a56028b86abe90"},
             new string[] {"Imperial Cruiser 2", "c41bae2a60d24abd99d0663c439f37e1"},
             new string[] {"Imperial Transport", "f29445dd202d4d98b9bc2ca0e4ce6192"},
@@ -48,8 +51,8 @@ namespace CustomFlagship
             //new string[] { "Falchion", "4e4481bae463473ebc4c3f7b10de9403" }
         };
 
-        static string[] shipNames = { ships[0][0], ships[1][0], ships[2][0], ships[3][0], ships[4][0], ships[5][0], ships[6][0] }; //, ships[7][0], ships[8][0] };
-        static string[] sizes = { "Large", "Normal", "Small", "XSmall", "XXSmall" };
+        static string[] shipNames = { ships[0][0], ships[1][0], ships[2][0], ships[3][0], ships[4][0], ships[5][0], ships[6][0], ships[7][0], ships[8][0], ships[9][0] }; //, ships[8][0], ships[9][0] };
+        static string[] sizes = { "XXLarge", "XLarge", "Large", "Normal", "Small", "XSmall", "XXSmall" };
 
         static int shipPick = 0;
         static int sizePick = 0;
@@ -101,7 +104,7 @@ namespace CustomFlagship
             GUILayout.Label("Pick a ship", GUILayout.ExpandWidth(false));
 
             int selectedShip = shipPick;
-            shipPick = GUILayout.SelectionGrid(selectedShip, shipNames, 4);
+            shipPick = GUILayout.SelectionGrid(selectedShip, shipNames, 3);
             if (selectedShip != shipPick)
             {
                 //log.Log("selectedShip: " + selectedShip + " shipPick: " + shipPick + ".");
@@ -119,7 +122,7 @@ namespace CustomFlagship
             GUILayout.Label("Pick a size", GUILayout.ExpandWidth(false));
 
             int selectedSize = sizePick;
-            sizePick = GUILayout.SelectionGrid(selectedSize, sizes, 5);
+            sizePick = GUILayout.SelectionGrid(selectedSize, sizes, 3);
             if (selectedSize != sizePick)
             {
                 cachedPerSave.SavedSize = sizePick.ToString();
@@ -132,11 +135,12 @@ namespace CustomFlagship
 
         public static void InitChange()
         {
+            ships[0][1] = Game.Instance.Player.AllStarships.FirstOrDefault()?.Descriptor().Blueprint.AssetGuid;
             ReloadPerSaveSettings();
-            // log.Log("savedShip: " + shipPick + " savedSize: " + sizePick + ".");
+            log.Log("savedShip: " + shipPick + " savedSize: " + sizePick + ".");
 
             BaseUnitEntity thisShip = Game.Instance.Player.AllStarships.FirstOrDefault()?.Descriptor();
-            // log.Log("bue: " + thisShip.Name + " shipPickBP:" + ships[shipPick][1].ToString() + " sizePick: " + sizes[sizePick].ToString());
+            log.Log("bue: " + thisShip.Name + " shipPickBP:" + ships[shipPick][1].ToString() + " sizePick: " + sizes[sizePick].ToString());
 
             var blueprintId = ships[shipPick][1];
             BlueprintUnit shipBlueprint = ResourcesLibrary.TryGetBlueprint<BlueprintUnit>(blueprintId);
@@ -150,6 +154,8 @@ namespace CustomFlagship
             // Scale mapping for each size
             var sizeScales = new Dictionary<string, Vector3>
             {
+                { "XXLarge", new Vector3(2.3f, 2.3f, 1.9f) },
+                { "XLarge", new Vector3(2.0f, 2.0f, 1.6f) },
                 { "Large", new Vector3(1.6f, 1.6f, 1.3f) },
                 { "Normal", new Vector3(1.0f, 1.0f, 1.0f) },
                 { "Small", new Vector3(0.6f, 0.6f, 0.8f) },
