@@ -65,7 +65,7 @@ namespace CustomFlagship
             [JsonProperty]
             public string savedShip = "0";
             [JsonProperty]
-            public string SavedSize = "1";
+            public string SavedSize = "3";
         }
 
         public static bool Load(UnityModManager.ModEntry modEntry)
